@@ -129,7 +129,7 @@ def validate_template(data):
         invalid("salePrice", "Sale price must not exceed cost price.")
     for key in ("pickupFrom", "pickupTo"):
         value = data[key]
-        if not isinstance(value, str) or not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+        if not isinstance(value, str) or not re.fullmatch(r"(?:[01][0-9]|2[0-3]):[0-5][0-9]", value):
             invalid(key, "Expected 24-hour HH:MM.")
         result[key] = value
     if result["pickupFrom"] >= result["pickupTo"]:

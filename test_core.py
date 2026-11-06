@@ -55,7 +55,7 @@ class StoreTests(unittest.TestCase):
         cases = [
             {"salePrice": 0}, {"salePrice": True}, {"salePrice": 1201},
             {"costPrice": -1}, {"salePrice": 4.5},
-            {"pickupFrom": "9:00"}, {"pickupTo": "25:00"},
+            {"pickupFrom": "9:00"}, {"pickupTo": "25:00"}, {"pickupFrom": "1９:00"},
             {"pickupTo": "18:00"}, {"pickupTo": "01:00"},
             {"name": " "}, {"status": "published"}, {"extra": "field"},
         ]
