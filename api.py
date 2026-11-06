@@ -50,6 +50,15 @@ def make_server(store, host="127.0.0.1", port=8765):
             # Avoid writing record IDs or query strings to a request log.
             pass
 
+        def send_error(self, code, message=None, explain=None):
+            # BaseHTTPRequestHandler otherwise emits HTML and a 501 for an
+            # unknown verb. Keep protocol rejections on the JSON contract too.
+            if code == 501:
+                code = 405
+            error_code = "method_not_allowed" if code == 405 else "http_error"
+            detail = self.responses.get(code, ("HTTP request rejected",))[0]
+            self.send_json(code, {"error": {"code": error_code, "message": detail}})
+
         def send_json(self, status, data, headers=None):
             payload = b"" if status == 204 else json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8")
             self.send_response(status)

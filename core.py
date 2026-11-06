@@ -1,6 +1,6 @@
 """Transactional SQLite domain model for a local, synthetic operations demo."""
 
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS order_events (
 CREATE INDEX IF NOT EXISTS events_order ON order_events(orderId, sequence);
 CREATE TABLE IF NOT EXISTS idempotency (
     key TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, response TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS demo_seed (
+    id INTEGER PRIMARY KEY CHECK(id=1), createdAt TEXT NOT NULL
 );
 """
 
@@ -161,7 +164,7 @@ class Store:
 
     def __init__(self, path):
         self.path = str(Path(path).resolve())
-        with sqlite3.connect(self.path, timeout=5) as connection:
+        with closing(sqlite3.connect(self.path, timeout=5)) as connection:
             connection.execute("PRAGMA journal_mode=WAL")
             version = connection.execute("PRAGMA user_version").fetchone()[0]
             if version not in (0, 1):

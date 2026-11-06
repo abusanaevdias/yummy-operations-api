@@ -154,6 +154,28 @@ class APITests(unittest.TestCase):
         with self.assertRaises(ValueError):
             make_server(self.store, host="0.0.0.0", port=0)
 
+    def test_unknown_http_method_returns_a_json_client_error(self):
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+        self.addCleanup(connection.close)
+        connection.request("BREW", "/api/health")
+        response = connection.getresponse()
+        self.assertEqual(405, response.status)
+        self.assertIn("application/json", response.getheader("Content-Type"))
+        self.assertEqual("method_not_allowed", json.loads(response.read())["error"]["code"])
+
+    def test_ambiguous_body_lengths_are_rejected_before_mutation(self):
+        connection = http.client.HTTPConnection("127.0.0.1", self.port, timeout=3)
+        self.addCleanup(connection.close)
+        connection.putrequest("POST", "/api/branches")
+        connection.putheader("Content-Type", "application/json")
+        connection.putheader("Content-Length", "2")
+        connection.putheader("Content-Length", "3")
+        connection.endheaders(b"{}")
+        response = connection.getresponse()
+        self.assertEqual(400, response.status)
+        self.assertEqual("invalid_length", json.loads(response.read())["error"]["code"])
+        self.assertEqual(1, len(self.store.list_branches()))
+
 
 if __name__ == "__main__":
     unittest.main()
