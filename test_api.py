@@ -176,6 +176,25 @@ class APITests(unittest.TestCase):
         self.assertEqual("invalid_length", json.loads(response.read())["error"]["code"])
         self.assertEqual(1, len(self.store.list_branches()))
 
+    def test_lone_surrogate_keys_and_nested_values_return_json_without_disconnect(self):
+        bodies = [b'{"\\ud800":1}',
+                  b'{"name":"\\ud800","address":"Synthetic","status":"open"}',
+                  b'{"unexpected":{"nested":["\\udfff"]}}']
+        for body in bodies:
+            with self.subTest(body=body):
+                status, _, problem = self.request("POST", "/api/branches", body,
+                                                  {"Content-Type": "application/json"}, raw=True)
+                self.assertEqual(400, status)
+                self.assertEqual("invalid_json", problem["error"]["code"])
+        self.assertEqual(1, len(self.store.list_branches()))
+
+    def test_valid_unicode_surrogate_pair_is_accepted(self):
+        status, _, branch = self.request("POST", "/api/branches",
+            b'{"name":"Demo \\ud83e\\udd50","address":"Synthetic","status":"open"}',
+            {"Content-Type": "application/json"}, raw=True)
+        self.assertEqual(201, status)
+        self.assertEqual("Demo 🥐", branch["name"])
+
 
 if __name__ == "__main__":
     unittest.main()

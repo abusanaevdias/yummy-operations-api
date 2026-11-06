@@ -110,7 +110,7 @@ Errors have one shape:
 | 422 | Invalid fields or query parameters |
 | 408 / 503 | Body read timeout or busy/unavailable storage |
 
-POST/PATCH require `Content-Length` and `Content-Type: application/json`; chunked bodies are rejected. JSON arrays, duplicate keys, and nonfinite number literals are rejected. Foreign-key references prevent deletion of templates or branches used by orders, including terminal orders. Branches referenced by employees are also protected.
+POST/PATCH require `Content-Length` and `Content-Type: application/json`; chunked bodies are rejected. JSON arrays, duplicate keys, lone Unicode surrogates in keys or nested values, and nonfinite number literals are rejected. Valid Unicode text and paired surrogate escapes are supported. Foreign-key references prevent deletion of templates or branches used by orders, including terminal orders. Branches referenced by employees are also protected.
 
 ## Verify locally
 

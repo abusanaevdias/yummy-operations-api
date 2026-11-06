@@ -59,7 +59,7 @@ Pickup hours belong to a template rather than a dated inventory slot. No clock r
 
 The server binds to `127.0.0.1` or `localhost` only. It requires the exact local Host/port, rejects differing browser origins, emits no CORS permissions, and sets `Cache-Control: no-store`. These measures reduce accidental browser access; they are not authentication. Any local process can call the API.
 
-Request JSON is limited to 16384 bytes. Reads time out after five seconds. Duplicate JSON keys, unsupported transfer encoding, unknown fields, repeated query parameters, and invalid scalar types are rejected. Route IDs and URL length are bounded. Collection responses include at most 100 records. HTTP/1.0 responses close connections after each request, avoiding unread-body reuse on error paths.
+Request JSON is limited to 16384 bytes. Reads time out after five seconds. Duplicate JSON keys, unsupported transfer encoding, unknown fields, repeated query parameters, and invalid scalar types are rejected. Recursive Unicode validation rejects unpaired surrogate escapes before field errors or SQLite access; valid surrogate pairs decode normally. JSON responses use ASCII escapes to remain safely encodable even on error paths. Route IDs and URL length are bounded. Collection responses include at most 100 records. HTTP/1.0 responses close connections after each request, avoiding unread-body reuse on error paths.
 
 The standard-library threaded server has no worker pool or request-rate controls. It is selected for a transparent local example with no dependencies. A deployed version needs a suitable application server, authentication and authorization, audit/observability, and operational limits.
 

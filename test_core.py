@@ -164,6 +164,13 @@ class StoreTests(unittest.TestCase):
         self.assert_problem(422, self.store.list_orders, None, None, 1000)
         self.assertEqual([], self.store.list_orders(branch_id="missing")["items"])
 
+    def test_invalid_unicode_in_values_and_keys_is_rejected_before_storage(self):
+        self.assert_problem(422, self.store.create_branch,
+                            {"name": "\ud800", "address": "Synthetic", "status": "open"})
+        self.assert_problem(422, self.store.create_branch,
+                            {"\ud800": 1})
+        self.assertEqual(1, len(self.store.list_branches()))
+
 
 if __name__ == "__main__":
     unittest.main()

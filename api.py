@@ -7,7 +7,7 @@ import socket
 import sqlite3
 from urllib.parse import parse_qs, urlsplit
 
-from core import Problem, fields, integer, invalid
+from core import Problem, ensure_unicode_scalars, fields, integer, invalid
 
 
 MAX_BODY = 16_384
@@ -60,7 +60,9 @@ def make_server(store, host="127.0.0.1", port=8765):
             self.send_json(code, {"error": {"code": error_code, "message": detail}})
 
         def send_json(self, status, data, headers=None):
-            payload = b"" if status == 204 else json.dumps(data, ensure_ascii=False, allow_nan=False).encode("utf-8")
+            # ASCII escaping also keeps error responses encodable if an
+            # unexpected internal string contains an unpaired surrogate.
+            payload = b"" if status == 204 else json.dumps(data, ensure_ascii=True, allow_nan=False).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(payload)))
@@ -102,8 +104,9 @@ def make_server(store, host="127.0.0.1", port=8765):
                 if len(body) != length:
                     raise ValueError("Incomplete body")
                 data = json.loads(body.decode("utf-8"), object_pairs_hook=unique_object, parse_constant=reject_constant)
+                ensure_unicode_scalars(data)
             except (ValueError, UnicodeError, RecursionError) as error:
-                raise Problem(400, "invalid_json", "Expected valid UTF-8 JSON with unique keys and finite numbers.") from error
+                raise Problem(400, "invalid_json", "Expected scalar Unicode JSON with unique keys and finite numbers.") from error
             fields(data, data.keys() if isinstance(data, dict) else ())
             return data
 

@@ -80,9 +80,26 @@ def invalid(field, message):
     raise Problem(422, "validation_error", message, field)
 
 
+def ensure_unicode_scalars(value):
+    """JSON permits escaped lone surrogates; UTF-8 and SQLite do not."""
+    if isinstance(value, str):
+        value.encode("utf-8")
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            ensure_unicode_scalars(key)
+            ensure_unicode_scalars(item)
+    elif isinstance(value, list):
+        for item in value:
+            ensure_unicode_scalars(item)
+
+
 def text(value, field, maximum=100, allow_empty=False):
     if not isinstance(value, str):
         invalid(field, "Expected a string.")
+    try:
+        ensure_unicode_scalars(value)
+    except UnicodeError:
+        invalid(field, "Expected valid Unicode scalar values.")
     value = value.strip()
     if (not allow_empty and not value) or len(value) > maximum:
         invalid(field, f"Expected {'0' if allow_empty else '1'} to {maximum} characters.")
@@ -112,6 +129,12 @@ def boolean(value, field):
 def fields(data, allowed, required=()):
     if not isinstance(data, dict):
         invalid("body", "Expected a JSON object.")
+    if any(not isinstance(key, str) for key in data):
+        invalid("body", "Object keys must be strings.")
+    try:
+        ensure_unicode_scalars(data)
+    except (UnicodeError, RecursionError):
+        invalid("body", "Expected valid Unicode scalar values and bounded nesting.")
     if set(data) - set(allowed):
         invalid("body", "Unknown fields: " + ", ".join(sorted(set(data) - set(allowed))) + ".")
     missing = set(required) - set(data)
